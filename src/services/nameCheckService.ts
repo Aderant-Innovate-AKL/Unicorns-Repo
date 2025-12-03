@@ -4,6 +4,7 @@ export interface MatchResult {
   name: string;
   tier: 1 | 2 | 3 | 4;
   justification: string;
+  matchedOn?: string; // What field triggered the match (e.g., "phone", "email", "name")
 }
 
 export interface NameCheckResponse {
@@ -11,37 +12,69 @@ export interface NameCheckResponse {
   matches: MatchResult[];
 }
 
+// Search criteria with optional contact details
+export interface SearchCriteria {
+  name: string;
+  phoneNumber?: string;
+  email?: string;
+  address?: string;
+}
+
+// Database record structure
+export interface DatabaseRecord {
+  Name: string;
+  Phone_Number?: string;
+  Internet_Addr?: string;
+  Address1?: string;
+}
+
 const API_BASE_URL = 'http://localhost:3001';
 
 /**
  * Performs a name check against the database using AI-powered matching
- * @param searchName - The name to search for
- * @param nameDatabase - The list of existing names to check against
+ * @param searchCriteria - The search criteria including name and optional contact details
+ * @param database - The list of existing records to check against
  * @returns Promise with match results
  */
 export async function performNameCheck(
-  searchName: string,
-  nameDatabase: string[],
+  searchCriteria: SearchCriteria | string,
+  database: DatabaseRecord[] | string[],
 ): Promise<NameCheckResponse> {
-  // Step 1: Pre-filter candidates using fuzzy matching
-  // This reduces the number of names sent to the AI, saving cost and latency
-  const candidates = preFilterCandidates(searchName, nameDatabase);
+  // Normalize inputs for backward compatibility
+  const criteria: SearchCriteria =
+    typeof searchCriteria === 'string' ? { name: searchCriteria } : searchCriteria;
+
+  const records: DatabaseRecord[] =
+    database.length > 0 && typeof database[0] === 'string'
+      ? (database as string[]).map((name) => ({ Name: name }))
+      : (database as DatabaseRecord[]);
+
+  // Step 1: Check for exact contact detail matches (these are strong matches)
+  const contactMatches = findContactMatches(criteria, records);
+
+  // Step 2: Pre-filter candidates using fuzzy name matching
+  const nameDatabase = records.map((r) => r.Name);
+  const nameCandidates = preFilterCandidates(criteria.name, nameDatabase);
+
+  // Combine contact matches with name candidates (removing duplicates)
+  const allCandidates = [
+    ...new Set([...contactMatches.map((m) => m.name), ...nameCandidates]),
+  ];
 
   console.log(
-    `Pre-filtered ${nameDatabase.length} names down to ${candidates.length} candidates`,
+    `Pre-filtered ${records.length} records: ${contactMatches.length} contact matches, ${nameCandidates.length} name candidates, ${allCandidates.length} total unique`,
   );
 
   // If no candidates after pre-filtering, return empty
-  if (candidates.length === 0) {
+  if (allCandidates.length === 0) {
     return {
-      searchedName: searchName,
+      searchedName: criteria.name,
       matches: [],
     };
   }
 
-  // Step 2: Send candidates to AI for intelligent matching
-  // Include the generated acronym if applicable so AI knows to check for acronym matches
-  const searchAcronym = generateAcronym(searchName);
+  // Step 3: Send candidates to AI for intelligent matching
+  const searchAcronym = generateAcronym(criteria.name);
 
   const response = await fetch(`${API_BASE_URL}/api/name-check`, {
     method: 'POST',
@@ -49,9 +82,10 @@ export async function performNameCheck(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      searchName,
-      candidates,
+      searchName: criteria.name,
+      candidates: allCandidates,
       searchAcronym: searchAcronym || undefined,
+      contactMatches: contactMatches.length > 0 ? contactMatches : undefined,
     }),
   });
 
@@ -61,6 +95,68 @@ export async function performNameCheck(
   }
 
   return response.json();
+}
+
+/**
+ * Finds records that match on contact details (phone, email, address)
+ * These are high-confidence matches regardless of name similarity
+ */
+function findContactMatches(
+  criteria: SearchCriteria,
+  records: DatabaseRecord[],
+): { name: string; matchedField: string; matchedValue: string }[] {
+  const matches: { name: string; matchedField: string; matchedValue: string }[] = [];
+
+  const normalizePhone = (phone: string) => phone.replace(/[\s\-().]/g, '').toLowerCase();
+  const normalizeEmail = (email: string) => email.trim().toLowerCase();
+  const normalizeAddress = (addr: string) =>
+    addr.trim().toLowerCase().replace(/[,.]/g, '').replace(/\s+/g, ' ');
+
+  for (const record of records) {
+    // Check phone number match
+    if (criteria.phoneNumber && record.Phone_Number) {
+      const searchPhone = normalizePhone(criteria.phoneNumber);
+      const recordPhone = normalizePhone(record.Phone_Number);
+      if (searchPhone && recordPhone && searchPhone === recordPhone) {
+        matches.push({
+          name: record.Name,
+          matchedField: 'Phone Number',
+          matchedValue: record.Phone_Number,
+        });
+        continue; // Don't double-count the same record
+      }
+    }
+
+    // Check email match
+    if (criteria.email && record.Internet_Addr) {
+      const searchEmail = normalizeEmail(criteria.email);
+      const recordEmail = normalizeEmail(record.Internet_Addr);
+      if (searchEmail && recordEmail && searchEmail === recordEmail) {
+        matches.push({
+          name: record.Name,
+          matchedField: 'Email/Website',
+          matchedValue: record.Internet_Addr,
+        });
+        continue;
+      }
+    }
+
+    // Check address match
+    if (criteria.address && record.Address1) {
+      const searchAddr = normalizeAddress(criteria.address);
+      const recordAddr = normalizeAddress(record.Address1);
+      if (searchAddr && recordAddr && searchAddr === recordAddr) {
+        matches.push({
+          name: record.Name,
+          matchedField: 'Address',
+          matchedValue: record.Address1,
+        });
+        continue;
+      }
+    }
+  }
+
+  return matches;
 }
 
 /**

@@ -24,7 +24,7 @@ if (!ANTHROPIC_API_KEY) {
 // Name matching endpoint
 app.post('/api/name-check', async (req, res) => {
   try {
-    const { searchName, candidates, searchAcronym } = req.body;
+    const { searchName, candidates, searchAcronym, contactMatches } = req.body;
 
     if (!searchName || !candidates || !Array.isArray(candidates)) {
       return res.status(400).json({
@@ -36,49 +36,77 @@ app.post('/api/name-check', async (req, res) => {
     if (searchAcronym) {
       console.log(`Search acronym detected: "${searchAcronym}"`);
     }
-
-    // Build the prompt for Claude
-    const prompt = buildNameMatchingPrompt(searchName, candidates, searchAcronym);
-
-    // Call Anthropic API
-    const response = await fetch(ANTHROPIC_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4096,
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Anthropic API error:', errorData);
-      return res.status(500).json({ error: 'Failed to process name matching request' });
+    if (contactMatches && contactMatches.length > 0) {
+      console.log(
+        `Contact matches found: ${contactMatches.length} (pre-qualified as Tier 1)`,
+      );
     }
 
-    const data = await response.json();
-    const content = data.content[0]?.text;
+    // Start with contact matches as Tier 1 (these are definite matches)
+    const contactMatchResults = (contactMatches || []).map((cm) => ({
+      name: cm.name,
+      tier: 1,
+      justification: `Exact ${cm.matchedField} match: "${cm.matchedValue}"`,
+    }));
 
-    if (!content) {
-      return res.status(500).json({ error: 'Empty response from AI' });
+    // Get names that are already matched via contact details
+    const contactMatchedNames = new Set(contactMatchResults.map((m) => m.name));
+
+    // Filter candidates to exclude those already matched via contact details
+    const remainingCandidates = candidates.filter((c) => !contactMatchedNames.has(c));
+
+    let aiMatches = [];
+
+    // Only call AI if there are remaining candidates to check
+    if (remainingCandidates.length > 0) {
+      // Build the prompt for Claude
+      const prompt = buildNameMatchingPrompt(
+        searchName,
+        remainingCandidates,
+        searchAcronym,
+      );
+
+      // Call Anthropic API
+      const response = await fetch(ANTHROPIC_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4096,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Anthropic API error:', errorData);
+        return res.status(500).json({ error: 'Failed to process name matching request' });
+      }
+
+      const data = await response.json();
+      const content = data.content[0]?.text;
+
+      if (content) {
+        // Parse the JSON response from Claude
+        aiMatches = parseAIResponse(content);
+      }
     }
 
-    // Parse the JSON response from Claude
-    const matches = parseAIResponse(content);
+    // Combine contact matches (first) with AI matches
+    const allMatches = [...contactMatchResults, ...aiMatches];
 
     res.json({
       searchedName: searchName,
-      matches,
+      matches: allMatches,
     });
   } catch (error) {
     console.error('Error in name-check endpoint:', error);
@@ -119,6 +147,7 @@ You must be STRICT and CONSERVATIVE. Only flag names that a reasonable person wo
 - Known nickname equivalents (e.g., "Bill" vs "William", "Bob" vs "Robert")
 - Clear phonetic equivalents/homophones (e.g., "Through" vs "Thru", "Knight" vs "Night")
 - **Acronyms and their expansions** (e.g., "DKNY" matches "Donna Karan New York", "IBM" matches "International Business Machines") - if the search term is all caps, check if it could be an acronym for any candidate name
+- **Rare/unique name components** - If a first name, middle name, or surname is distinctively rare or unusual (e.g., "Darvonious", "Xiomara", "Pemberton", "Malificient"), treat a match on that specific component as significant even if other name parts differ entirely. Example: "Darvonious Johnson" should match "Darvonious Smith" because "Darvonious" is so rare it's unlikely to be coincidental. However, do NOT apply this logic to common names - "John Smith" should NOT match "John Williams" just because they share "John".
 
 TIER DEFINITIONS:
 1. **Tier 1 - Exact Match**: Identical names (ignoring case/punctuation). "NASA" = "N.A.S.A." = "nasa" are all Tier 1. But "NASA" vs "National Aeronautics Space Administration" is NOT Tier 1 - that's an acronym expansion.
@@ -146,7 +175,8 @@ If there are NO genuine matches, return an empty array: []
 Example response:
 [
   {"name": "Sarah Mitchell", "tier": 2, "justification": "Likely typo - 'Sara' missing 'h', same last name."},
-  {"name": "Johnson & Partners Ltd", "tier": 2, "justification": "Same entity - '&' vs 'and', 'Ltd' vs 'Limited'."}
+  {"name": "Johnson & Partners Ltd", "tier": 2, "justification": "Same entity - '&' vs 'and', 'Ltd' vs 'Limited'."},
+  {"name": "Darvonious Smith", "tier": 2, "justification": "Rare first name match - 'Darvonious' is highly unusual, unlikely to be coincidental."}
 ]
 
 Analyze the candidates now and return ONLY the JSON array:`;

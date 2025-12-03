@@ -90,7 +90,7 @@ export default function App() {
       showStridynNavItems={false}
       accountConfig={accountConfig}
     >
-      <PlatformPageContainer sx={{ height: '100%' }}>
+      <PlatformPageContainer sx={{ height: '100%', overflow: 'auto' }}>
         <Outlet />
       </PlatformPageContainer>
     </PlatformLayout>
