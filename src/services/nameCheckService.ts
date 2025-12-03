@@ -40,6 +40,9 @@ export async function performNameCheck(
   }
 
   // Step 2: Send candidates to AI for intelligent matching
+  // Include the generated acronym if applicable so AI knows to check for acronym matches
+  const searchAcronym = generateAcronym(searchName);
+
   const response = await fetch(`${API_BASE_URL}/api/name-check`, {
     method: 'POST',
     headers: {
@@ -48,6 +51,7 @@ export async function performNameCheck(
     body: JSON.stringify({
       searchName,
       candidates,
+      searchAcronym: searchAcronym || undefined,
     }),
   });
 
@@ -66,11 +70,30 @@ export async function performNameCheck(
 function preFilterCandidates(
   searchName: string,
   nameDatabase: string[],
-  maxCandidates = 100,
+  maxCandidates = 50,
 ): string[] {
   const normalizedSearch = normalizeForComparison(searchName);
   const searchTokens = tokenize(searchName);
   const searchSoundex = soundexCode(normalizedSearch);
+  const isShortSearch = normalizedSearch.length <= 4;
+
+  // Check if search looks like an acronym (e.g., "DKNY", "IBM", "ABC")
+  const searchIsAcronym = isLikelyAcronym(searchName);
+  const searchAcronymLower = searchIsAcronym
+    ? searchName.replace(/[^A-Za-z]/g, '').toLowerCase()
+    : '';
+
+  // Also generate acronym from search if it's a multi-word name
+  const searchGeneratedAcronym = generateAcronym(searchName);
+
+  // Debug logging
+  console.log('Search analysis:', {
+    searchName,
+    searchIsAcronym,
+    searchAcronymLower,
+    searchGeneratedAcronym,
+    isShortSearch,
+  });
 
   // Score each name in the database
   const scoredNames = nameDatabase.map((name) => {
@@ -85,38 +108,176 @@ function preFilterCandidates(
       score += 1000;
     }
 
-    // Levenshtein distance (for typos)
-    const distance = levenshteinDistance(normalizedSearch, normalizedName);
-    const maxLen = Math.max(normalizedSearch.length, normalizedName.length);
-    const similarity = 1 - distance / maxLen;
-    score += similarity * 100;
-
-    // Token overlap (for partial matches)
-    const tokenOverlap = calculateTokenOverlap(searchTokens, nameTokens);
-    score += tokenOverlap * 50;
-
-    // Soundex match (for homophones)
-    if (searchSoundex === nameSoundex) {
-      score += 30;
+    // ACRONYM MATCHING
+    if (searchIsAcronym) {
+      // Search is an acronym - check if name's acronym matches
+      const nameAcronym = generateAcronym(name);
+      if (nameAcronym && nameAcronym === searchAcronymLower) {
+        score += 300; // Strong match: "DKNY" matches "Donna Karan New York"
+      }
+      // Also check if the acronym appears as a token in the name
+      if (nameTokens.includes(searchAcronymLower)) {
+        score += 200; // The acronym itself is in the name
+      }
     }
 
-    // Substring match
-    if (
-      normalizedName.includes(normalizedSearch) ||
-      normalizedSearch.includes(normalizedName)
-    ) {
-      score += 40;
+    // Check if name looks like an acronym and search's acronym matches it
+    if (isLikelyAcronym(name)) {
+      const nameAcronymLower = name.replace(/[^A-Za-z]/g, '').toLowerCase();
+      console.log('Checking acronym match:', {
+        name,
+        nameAcronymLower,
+        searchGeneratedAcronym,
+        match: searchGeneratedAcronym === nameAcronymLower,
+      });
+      if (searchGeneratedAcronym && searchGeneratedAcronym === nameAcronymLower) {
+        score += 300; // "Donna Karan New York" matches "DKNY"
+        console.log('ACRONYM MATCH FOUND:', name, 'score now:', score);
+      }
+    }
+
+    // Exact token match (e.g., searching "TAL" matches a company named "TAL Industries")
+    const hasExactTokenMatch = nameTokens.some(
+      (token) => token === normalizedSearch || searchTokens.includes(token),
+    );
+    if (hasExactTokenMatch) {
+      score += 200;
+    }
+
+    // Levenshtein distance (for typos) - only meaningful for similar length strings
+    const lengthRatio =
+      Math.min(normalizedSearch.length, normalizedName.length) /
+      Math.max(normalizedSearch.length, normalizedName.length);
+    if (lengthRatio > 0.3) {
+      const distance = levenshteinDistance(normalizedSearch, normalizedName);
+      const maxLen = Math.max(normalizedSearch.length, normalizedName.length);
+      const similarity = 1 - distance / maxLen;
+      // Higher weight for high similarity
+      if (similarity > 0.7) {
+        score += similarity * 150;
+      } else if (similarity > 0.5) {
+        score += similarity * 50;
+      }
+    }
+
+    // Token overlap (for partial matches in multi-word names)
+    const tokenOverlap = calculateTokenOverlap(searchTokens, nameTokens);
+    if (tokenOverlap > 0.5) {
+      score += tokenOverlap * 80;
+    }
+
+    // Soundex match (for homophones) - more valuable for longer names
+    if (searchSoundex === nameSoundex && !isShortSearch) {
+      score += 50;
+    }
+
+    // Substring match - only valuable if it's a meaningful match
+    // Avoid matching "TAL" inside "Natalie"
+    if (!isShortSearch) {
+      // For longer searches, substring matching is useful
+      if (
+        normalizedName.includes(normalizedSearch) ||
+        normalizedSearch.includes(normalizedName)
+      ) {
+        score += 30;
+      }
+    } else {
+      // For short searches, only match if it's at word boundaries
+      const wordBoundaryPattern = new RegExp(
+        `\\b${escapeRegex(normalizedSearch)}\\b`,
+        'i',
+      );
+      if (wordBoundaryPattern.test(name)) {
+        score += 100; // Strong match - it's a complete word/token
+      }
     }
 
     return { name, score };
   });
 
+  // Higher threshold for short searches to reduce noise (but not for acronyms which have specific matches)
+  const minThreshold = isShortSearch && !searchIsAcronym ? 80 : 40;
+
   // Sort by score and take top candidates
-  return scoredNames
-    .filter((item) => item.score > 20) // Minimum threshold
+  const filtered = scoredNames
+    .filter((item) => item.score > minThreshold)
     .sort((a, b) => b.score - a.score)
-    .slice(0, maxCandidates)
-    .map((item) => item.name);
+    .slice(0, maxCandidates);
+
+  console.log('Top candidates with scores:', filtered.slice(0, 10));
+  console.log('Min threshold:', minThreshold);
+
+  return filtered.map((item) => item.name);
+}
+
+/**
+ * Checks if a string looks like an acronym
+ * - All uppercase letters (ignoring punctuation)
+ * - 2-8 characters long
+ * - At least 2 letters
+ */
+function isLikelyAcronym(str: string): boolean {
+  const letters = str.replace(/[^A-Za-z]/g, '');
+  if (letters.length < 2 || letters.length > 8) return false;
+  // Check if the original string's letters are all uppercase
+  const upperLetters = str.replace(/[^A-Z]/g, '');
+  return upperLetters.length === letters.length && letters.length >= 2;
+}
+
+/**
+ * Generates an acronym from a multi-word name
+ * e.g., "Donna Karan New York" -> "dkny"
+ * Returns lowercase acronym or empty string if not applicable
+ */
+function generateAcronym(str: string): string {
+  // Split into words, filter out common suffixes and short words
+  const words = str
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter((word) => {
+      const lower = word.toLowerCase();
+      // Skip common business suffixes and very short words
+      const skipWords = [
+        'ltd',
+        'limited',
+        'llc',
+        'llp',
+        'inc',
+        'incorporated',
+        'corp',
+        'corporation',
+        'co',
+        'company',
+        'plc',
+        'partners',
+        'and',
+        'the',
+        'of',
+        'for',
+        'a',
+        'an',
+      ];
+      return word.length > 0 && !skipWords.includes(lower);
+    });
+
+  // Need at least 2 words to form a meaningful acronym
+  if (words.length < 2) return '';
+
+  // Take first letter of each remaining word
+  const acronym = words.map((word) => word[0].toLowerCase()).join('');
+
+  // Only return if acronym is reasonable length (2-8 chars)
+  if (acronym.length >= 2 && acronym.length <= 8) {
+    return acronym;
+  }
+  return '';
+}
+
+/**
+ * Escapes special regex characters in a string
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**
