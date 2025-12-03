@@ -1,0 +1,147 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AI-Powered Name Reconciliation Service for Expert File Opening
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Environment name
+
+  BedrockModelId:
+    Type: String
+    Default: anthropic.claude-3-sonnet-20240229-v1:0
+    Description: Amazon Bedrock model ID for AI matching
+
+  CorsOrigin:
+    Type: String
+    Default: '*'
+    Description: CORS allowed origin (use specific domain in production)
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: python3.11
+    MemorySize: 512
+    Environment:
+      Variables:
+        ENVIRONMENT: !Ref Environment
+        BEDROCK_MODEL_ID: !Ref BedrockModelId
+        ENTITIES_TABLE_NAME: !Ref EntitiesTable
+
+Resources:
+  # API Gateway
+  ReconciliationApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub name-reconciliation-api-${Environment}
+      StageName: !Ref Environment
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: !Sub "'${CorsOrigin}'"
+      Auth:
+        ApiKeyRequired: false # Set to true in production
+
+  # Lambda Function for Name Reconciliation
+  NameReconciliationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub name-reconciliation-${Environment}
+      CodeUri: lambda/name-reconciliation/
+      Handler: handler.lambda_handler
+      Description: AI-powered name reconciliation using Amazon Bedrock
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/*
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource: !GetAtt EntitiesTable.Arn
+      Events:
+        ReconcileApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReconciliationApi
+            Path: /api/reconcile
+            Method: POST
+        ConflictsCheckApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ReconciliationApi
+            Path: /api/conflicts/check
+            Method: POST
+
+  # DynamoDB Table for storing entities
+  EntitiesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ExpertEntities-${Environment}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: entityType
+          AttributeType: S
+        - AttributeName: name
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: EntityTypeIndex
+          KeySchema:
+            - AttributeName: entityType
+              KeyType: HASH
+            - AttributeName: name
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: ExpertFileOpening
+
+  # CloudWatch Log Group
+  ReconciliationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/name-reconciliation-${Environment}
+      RetentionInDays: 30
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub https://${ReconciliationApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}
+    Export:
+      Name: !Sub ${AWS::StackName}-ApiEndpoint
+
+  ReconciliationApiUrl:
+    Description: Name Reconciliation API URL
+    Value: !Sub https://${ReconciliationApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/api/reconcile
+    Export:
+      Name: !Sub ${AWS::StackName}-ReconciliationUrl
+
+  EntitiesTableName:
+    Description: DynamoDB table name for entities
+    Value: !Ref EntitiesTable
+    Export:
+      Name: !Sub ${AWS::StackName}-EntitiesTable
+
+  LambdaFunctionArn:
+    Description: ARN of the name reconciliation Lambda function
+    Value: !GetAtt NameReconciliationFunction.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-LambdaArn

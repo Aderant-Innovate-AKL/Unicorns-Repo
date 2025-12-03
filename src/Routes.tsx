@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 
 import App from './App';
 import Home from './pages/Home';
+import NameReconciliation from './pages/NameReconciliation';
 import NotFoundPage from './pages/NotFoundPage';
 
 const routes = [
@@ -17,6 +18,10 @@ const routes = [
       {
         path: '/home',
         Component: Home,
+      },
+      {
+        path: '/reconciliation',
+        Component: NameReconciliation,
       },
     ],
   },

@@ -1,0 +1,44 @@
+# The manifest for the "reconciliation-api" service.
+# AI-Powered Name Reconciliation API using Amazon Bedrock and DynamoDB
+# Read the full specification for the "Load Balanced Web Service" type at:
+#  https://aws.github.io/copilot-cli/docs/manifest/lb-web-service/
+
+name: reconciliation-api
+type: Load Balanced Web Service
+
+# Distribute traffic to your service.
+http:
+  path: '/'
+  healthcheck:
+    path: /health
+    healthy_threshold: 3
+    unhealthy_threshold: 2
+    interval: 30s
+    timeout: 10s
+
+# Configuration for your containers and service.
+image:
+  build: lambda/name-reconciliation/Dockerfile
+  port: 8080
+
+cpu: 512 # Number of CPU units for the task.
+memory: 1024 # Amount of memory in MiB used by the task.
+count: 1 # Number of tasks that should be running in your service.
+exec: true # Enable running commands in your container.
+
+network:
+  connect: true # Enable Service Connect for intra-environment traffic between services.
+
+# Environment variables for the API
+variables:
+  BEDROCK_MODEL_ID: anthropic.claude-3-sonnet-20240229-v1:0
+  AWS_REGION: ap-southeast-2
+
+# Environment-specific overrides
+environments:
+  dev:
+    variables:
+      ENVIRONMENT: dev
+      ENTITIES_TABLE_NAME:
+        from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-EntitiesTableName
+    count: 1

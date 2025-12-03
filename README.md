@@ -1,7 +1,43 @@
-# Your Hackathon Project
+# Expert File Opening - AI-Powered Name Reconciliation
 
-A React application built from the Hackathon UI Template with React 19, TypeScript, Vite,
-and Material UI.
+A React application with AI-powered name reconciliation for legal file opening workflows.
+Built with React 19, TypeScript, Vite, Material UI, and AWS serverless services.
+
+## 🚀 Key Features
+
+### AI-Powered Name Reconciliation
+
+Replaces traditional SQL soundex queries with intelligent ML-based fuzzy matching using
+**Amazon Bedrock (Claude 3)**.
+
+**Traditional Approach:**
+
+```sql
+SELECT * FROM clients WHERE SOUNDEX(name) = SOUNDEX('John Smith')
+```
+
+**AI-Powered Approach:**
+
+- ✅ Handles typos and spelling variations
+- ✅ Recognizes nicknames (Bob = Robert, Jim = James)
+- ✅ Corporate entity matching (ABC Corp = ABC Corporation)
+- ✅ Name order flexibility (Smith, John = John Smith)
+- ✅ Phonetic similarity detection
+- ✅ Confidence scores with AI explanations
+- ✅ Automated conflicts checking
+
+### Expert File Opening Workflow
+
+Automates the complete business process:
+
+1. **Initial Intake** - Quick data entry for new matters
+2. **AI Name Reconciliation** - Intelligent entity matching
+3. **Conflicts Check** - Automated conflict detection
+4. **Client/Matter Code Generation** - Automatic or manual
+5. **Pending Save** - Allow timekeepers access during workflow
+6. **Additional Information** - Detailed data collection
+7. **Administrative Approvals** - Multi-level approval routing
+8. **Final Save** - Complete with status updates and notifications
 
 ## Getting Started
 
@@ -145,35 +181,165 @@ const simpleUser: HackathonUser = {
 };
 ```
 
+## Deployment
+
+### Frontend Deployment (AWS Copilot)
+
+This project is pre-configured for AWS deployment using GitHub Actions and AWS Copilot.
+
+**Configure GitHub Secrets** (Settings → Secrets and variables → Actions):
+
+**Variables**:
+
+- `AWS_ACCESS_KEY_ID` - Your AWS access key ID
+- `AWS_REGION` - AWS region (e.g., `ap-southeast-2`)
+
+**Secrets**:
+
+- `AWS_SECRET_ACCESS_KEY` - Your AWS secret access key
+- `GITHUB_TOKEN` - GitHub personal access token with `read:packages` scope
+
+**Deploy:**
+
+```bash
+git push origin main  # Automatic deployment via GitHub Actions
+```
+
+### AI Backend Deployment (AWS Lambda + Bedrock)
+
+Deploy the AI-powered name reconciliation service:
+
+**Prerequisites:**
+
+1. AWS SAM CLI installed:
+   https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html
+2. AWS credentials configured
+3. **Enable Amazon Bedrock** access in AWS Console (us-east-1 or ap-southeast-2)
+   - Go to AWS Console → Amazon Bedrock
+   - Model access → Enable Claude 3 Sonnet
+
+**Deploy Lambda Function:**
+
+```powershell
+# Windows PowerShell
+.\deploy-lambda.ps1 -Environment dev -Region ap-southeast-2
+
+# Or Linux/Mac
+./deploy-lambda.sh dev ap-southeast-2
+```
+
+**Configure Frontend to Use Backend:**
+
+After deployment, copy the API endpoint from outputs and update `.env.development`:
+
+```bash
+UI_API_BASE_URL=https://your-api-id.execute-api.ap-southeast-2.amazonaws.com/dev
+```
+
+**Seed Sample Data (Optional):**
+
+```bash
+# Get table name from CloudFormation outputs
+aws dynamodb batch-write-item \
+  --request-items file://lambda/sample-entities.json \
+  --region ap-southeast-2
+```
+
+### Architecture Overview
+
+```
+┌─────────────────┐
+│   React App     │
+│  (Vite + MUI)   │
+└────────┬────────┘
+         │
+         │ HTTPS
+         ▼
+┌─────────────────┐
+│  API Gateway    │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐      ┌──────────────┐
+│  Lambda Function│─────▶│   Bedrock    │
+│  (Python 3.11)  │      │ (Claude 3)   │
+└────────┬────────┘      └──────────────┘
+         │
+         ▼
+┌─────────────────┐
+│    DynamoDB     │
+│  (Entities DB)  │
+└─────────────────┘
+```
+
+## 🎯 Using the AI Name Reconciliation
+
+### In the UI
+
+1. Navigate to **Name Reconciliation** in the sidebar
+2. Enter client/party names to reconcile
+3. Select entity type (Client, Matter Party, Contact, etc.)
+4. Click "Find Matches"
+5. Review AI-powered match results with confidence scores
+6. View automated conflicts check report
+
+### Example Use Cases
+
+**Case 1: Exact Match with Typo**
+
+- Input: "Jhon Smith"
+- Result: Matches "John E. Smith" (95% confidence)
+- AI Reason: "High confidence - likely typo, phonetic match"
+
+**Case 2: Corporate Entity**
+
+- Input: "ABC Corp"
+- Result: Matches "ABC Corporation" (88% confidence)
+- AI Reason: "Corporate suffix variation, same base name"
+
+**Case 3: Name Order**
+
+- Input: "Smith, Robert J."
+- Result: Matches "Robert Johnson Smith" (82% confidence)
+- AI Reason: "Name components match in different order"
+
+**Case 4: Nickname**
+
+- Input: "Bob Williams"
+- Result: Matches "Robert Williams" (90% confidence)
+- AI Reason: "Nickname variation - Bob is common for Robert"
+
+## 🔧 Development
+
+### Running Locally (Mock Data)
+
+The app works immediately without backend:
+
+```bash
+pnpm dev
+# Open http://localhost:3000
+```
+
+Mock data is used automatically. The Name Reconciliation page simulates AI matching for
+demonstration.
+
+### Connecting Real Backend
+
+1. Deploy Lambda function (see above)
+2. Set `UI_API_BASE_URL` in `.env.development`
+3. Restart dev server: `pnpm dev`
+
 ## Deployment to AWS
 
 This project is pre-configured for AWS deployment using GitHub Actions and AWS Copilot.
 The deployment infrastructure is already set up in the `.github/workflows/` directory!
 
-### Quick Deploy
-
-To deploy your app, you only need to:
-
-1. **Configure GitHub Secrets** (one-time setup)
-2. **Push to main** - Automatic deployment via GitHub Actions
-3. **Or deploy manually** using AWS Copilot CLI
-
-### Configure GitHub Secrets
-
-In your GitHub repository settings (Settings → Secrets and variables → Actions), add:
-
-**Variables**:
-
-- `AWS_ACCESS_KEY_ID` - Your AWS access key ID
-- `AWS_REGION` - AWS region (e.g., `us-east-1`)
-- `DOCKER_USERNAME` - Your Docker Hub username (optional, for rate limit)
-
 **Secrets**:
 
 - `AWS_SECRET_ACCESS_KEY` - Your AWS secret access key
 - `DOCKER_PASSWORD` - Your Docker Hub password (optional, for rate limit)
-- `GHCR_READ_TOKEN` - GitHub personal access token with `read:packages` permission (required
-  for @aderant packages)
+- `GHCR_READ_TOKEN` - GitHub personal access token with `read:packages` permission
+  (required for @aderant packages)
 
 **Creating a GitHub Token:**
 

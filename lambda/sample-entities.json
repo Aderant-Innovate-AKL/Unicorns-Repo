@@ -1,0 +1,46 @@
+[
+  {
+    "id": { "S": "CLI-001" },
+    "name": { "S": "John E. Smith" },
+    "entityType": { "S": "client" },
+    "email": { "S": "jsmith@example.com" },
+    "phone": { "S": "+1-555-0101" },
+    "lastModified": { "S": "2024-11-15T10:30:00Z" },
+    "createdBy": { "S": "system" }
+  },
+  {
+    "id": { "S": "CLI-002" },
+    "name": { "S": "Jane Smith LLC" },
+    "entityType": { "S": "client" },
+    "email": { "S": "jane.smith@smithllc.com" },
+    "phone": { "S": "+1-555-0102" },
+    "lastModified": { "S": "2024-10-20T14:15:00Z" },
+    "createdBy": { "S": "jdoe" }
+  },
+  {
+    "id": { "S": "CLI-003" },
+    "name": { "S": "ABC Corporation" },
+    "entityType": { "S": "client" },
+    "email": { "S": "legal@abccorp.com" },
+    "phone": { "S": "+1-555-0103" },
+    "lastModified": { "S": "2024-09-05T09:00:00Z" },
+    "createdBy": { "S": "admin" }
+  },
+  {
+    "id": { "S": "CLI-004" },
+    "name": { "S": "Robert Johnson" },
+    "entityType": { "S": "client" },
+    "email": { "S": "rjohnson@email.com" },
+    "lastModified": { "S": "2024-08-12T16:45:00Z" },
+    "createdBy": { "S": "system" }
+  },
+  {
+    "id": { "S": "CLI-005" },
+    "name": { "S": "Smith & Associates Law Firm" },
+    "entityType": { "S": "client" },
+    "email": { "S": "contact@smithlaw.com" },
+    "phone": { "S": "+1-555-0105" },
+    "lastModified": { "S": "2024-07-30T11:20:00Z" },
+    "createdBy": { "S": "partner1" }
+  }
+]

@@ -1,0 +1,106 @@
+Parameters:
+  App:
+    Type: String
+    Description: Your application's name.
+  Env:
+    Type: String
+    Description: The environment name your service, job, or workflow is being deployed to.
+  Name:
+    Type: String
+    Description: Your workload's name.
+
+Resources:
+  # DynamoDB Table for Expert Entities
+  EntitiesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${App}-${Env}-ExpertEntities'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: entityType
+          AttributeType: S
+        - AttributeName: name
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: EntityTypeIndex
+          KeySchema:
+            - AttributeName: entityType
+              KeyType: HASH
+            - AttributeName: name
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: copilot-application
+          Value: !Ref App
+        - Key: copilot-environment
+          Value: !Ref Env
+
+  # IAM Policy for Bedrock Access
+  BedrockAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - bedrock:InvokeModel
+              - bedrock:InvokeModelWithResponseStream
+            Resource:
+              - !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0'
+              - !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/*'
+
+  # IAM Policy for DynamoDB Access
+  DynamoDBAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+            Resource:
+              - !GetAtt EntitiesTable.Arn
+              - !Sub '${EntitiesTable.Arn}/index/*'
+
+Outputs:
+  EntitiesTableName:
+    Description: DynamoDB table name for Expert entities
+    Value: !Ref EntitiesTable
+    Export:
+      Name: !Sub ${App}-${Env}-EntitiesTableName
+
+  EntitiesTableArn:
+    Description: DynamoDB table ARN
+    Value: !GetAtt EntitiesTable.Arn
+    Export:
+      Name: !Sub ${App}-${Env}-EntitiesTableArn
+
+  BedrockAccessPolicyArn:
+    Description: IAM policy ARN for Bedrock access
+    Value: !Ref BedrockAccessPolicy
+
+  DynamoDBAccessPolicyArn:
+    Description: IAM policy ARN for DynamoDB access
+    Value: !Ref DynamoDBAccessPolicy
+
+# Grant task role access to Bedrock and DynamoDB
+Injected:
+  TaskRole:
+    ManagedPolicyArns:
+      - !Ref BedrockAccessPolicy
+      - !Ref DynamoDBAccessPolicy

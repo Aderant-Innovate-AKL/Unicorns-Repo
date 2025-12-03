@@ -9,6 +9,7 @@
  */
 export const QUERY_KEYS = {
   USER: ['user'],
+  NAME_RECONCILIATION: ['nameReconciliation'],
   // Add more query keys as needed
   // EXAMPLE: ['myData', 'list']
 } as const;
@@ -23,6 +24,10 @@ export const API_ENDPOINTS = {
     WHO_AM_I: '/heimdall/authn/whoami/',
     LOGOUT: '/logout',
   },
+  NAME_RECONCILIATION: {
+    RECONCILE: '/api/reconcile',
+    CHECK_CONFLICTS: '/api/conflicts/check',
+  },
   // Add your API endpoints here
   // EXAMPLE: { GET_LIST: '/api/data' }
 } as const;
@@ -33,6 +38,7 @@ export const API_ENDPOINTS = {
  */
 export const ROUTES = {
   HOME: '/home',
+  NAME_RECONCILIATION: '/reconciliation',
   // Add more routes as needed
   // EXAMPLE: SETTINGS: '/settings'
 } as const;
@@ -41,6 +47,6 @@ export const ROUTES = {
  * Application metadata
  */
 export const APP_METADATA = {
-  TITLE: 'Hackathon App', // TODO: Update with your app name
-  DESCRIPTION: 'Hackathon Project',
+  TITLE: 'Expert File Opening', // TODO: Update with your app name
+  DESCRIPTION: 'AI-Powered Name Reconciliation and Conflicts Check',
 } as const;

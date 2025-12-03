@@ -10,6 +10,7 @@ import {
   type LayoutAccountConfig,
 } from '@aderant/stridyn-foundation';
 import DashboardOutlined from '@mui/icons-material/DashboardOutlined';
+import SearchIcon from '@mui/icons-material/Search';
 import { useSearchParams, useLocation, useNavigate, Outlet } from 'react-router';
 import { useUser } from 'src/contexts';
 import { APP_METADATA } from 'src/utils/constants';
@@ -20,6 +21,11 @@ const navConfig = [
     segment: 'home',
     title: 'Home',
     icon: <DashboardOutlined />,
+  },
+  {
+    segment: 'reconciliation',
+    title: 'Name Reconciliation',
+    icon: <SearchIcon />,
   },
 ];
 

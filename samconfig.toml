@@ -1,0 +1,31 @@
+version = 0.1
+
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "name-reconciliation-dev"
+s3_prefix = "name-reconciliation"
+region = "ap-southeast-2"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=dev"
+confirm_changeset = true
+resolve_s3 = true
+
+[dev]
+[dev.deploy]
+[dev.deploy.parameters]
+stack_name = "name-reconciliation-dev"
+s3_prefix = "name-reconciliation-dev"
+region = "ap-southeast-2"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=dev"
+
+[prod]
+[prod.deploy]
+[prod.deploy.parameters]
+stack_name = "name-reconciliation-prod"
+s3_prefix = "name-reconciliation-prod"
+region = "ap-southeast-2"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=prod"
+confirm_changeset = true
