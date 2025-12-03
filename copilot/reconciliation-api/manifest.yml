@@ -39,6 +39,5 @@ environments:
   dev:
     variables:
       ENVIRONMENT: dev
-      ENTITIES_TABLE_NAME:
-        from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-EntitiesTableName
+      ENTITIES_TABLE_NAME: !GetAtt AddonsStack.Outputs.EntitiesTableName
     count: 1

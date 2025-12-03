@@ -81,14 +81,10 @@ Outputs:
   EntitiesTableName:
     Description: DynamoDB table name for Expert entities
     Value: !Ref EntitiesTable
-    Export:
-      Name: !Sub ${App}-${Env}-EntitiesTableName
 
   EntitiesTableArn:
     Description: DynamoDB table ARN
     Value: !GetAtt EntitiesTable.Arn
-    Export:
-      Name: !Sub ${App}-${Env}-EntitiesTableArn
 
   BedrockAccessPolicyArn:
     Description: IAM policy ARN for Bedrock access
