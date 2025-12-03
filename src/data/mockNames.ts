@@ -1617,6 +1617,9 @@ export const mockNames: string[] = [
 
   // Major law firms for testing
   'Skadden, Arps, Slate, Meagher, & Flom LLP and Affiliates',
+
+  // Names with special characters
+  'Wolfgang Müller',
 ];
 
 export default mockNames;
