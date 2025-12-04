@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI-Powered Name Recognition - POC Presentation</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #1a1a2e;
+        color: #eee;
+        overflow: hidden;
+      }
+
+      .slide {
+        display: none;
+        height: 100vh;
+        padding: 60px 80px;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      }
+
+      .slide.active {
+        display: flex;
+        flex-direction: column;
+      }
+
+      h1 {
+        font-size: 3.5rem;
+        color: #e94560;
+        margin-bottom: 20px;
+      }
+
+      h2 {
+        font-size: 2.8rem;
+        color: #0f3460;
+        background: linear-gradient(90deg, #e94560, #ff6b6b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 40px;
+      }
+
+      h3 {
+        font-size: 1.8rem;
+        color: #e94560;
+        margin: 30px 0 15px 0;
+      }
+
+      p,
+      li {
+        font-size: 1.5rem;
+        line-height: 1.8;
+        color: #ddd;
+      }
+
+      ul {
+        margin-left: 40px;
+      }
+
+      li {
+        margin: 15px 0;
+      }
+
+      .title-slide {
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+
+      .title-slide h1 {
+        font-size: 4.5rem;
+        margin-bottom: 30px;
+      }
+
+      .title-slide .subtitle {
+        font-size: 2rem;
+        color: #888;
+        margin-bottom: 60px;
+      }
+
+      .title-slide .meta {
+        font-size: 1.3rem;
+        color: #666;
+      }
+
+      .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        flex: 1;
+      }
+
+      .highlight-box {
+        background: rgba(233, 69, 96, 0.1);
+        border-left: 4px solid #e94560;
+        padding: 25px 30px;
+        margin: 20px 0;
+        border-radius: 0 10px 10px 0;
+      }
+
+      .code-block {
+        background: #0d1117;
+        border-radius: 10px;
+        padding: 25px;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 1.1rem;
+        overflow-x: auto;
+        margin: 20px 0;
+      }
+
+      .code-block .key {
+        color: #79c0ff;
+      }
+      .code-block .string {
+        color: #a5d6ff;
+      }
+      .code-block .number {
+        color: #f8b84e;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 1.3rem;
+      }
+
+      th,
+      td {
+        padding: 15px 20px;
+        text-align: left;
+        border-bottom: 1px solid #333;
+      }
+
+      th {
+        background: rgba(233, 69, 96, 0.2);
+        color: #e94560;
+      }
+
+      .navigation {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        display: flex;
+        gap: 15px;
+      }
+
+      .nav-btn {
+        background: #e94560;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 1.2rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          background 0.2s;
+      }
+
+      .nav-btn:hover {
+        background: #ff6b6b;
+        transform: scale(1.05);
+      }
+
+      .slide-number {
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        font-size: 1rem;
+        color: #666;
+      }
+
+      .emoji {
+        font-size: 4rem;
+        margin-bottom: 20px;
+      }
+
+      .checkmark {
+        color: #4ade80;
+      }
+      .warning {
+        color: #fbbf24;
+      }
+
+      .flow-diagram {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        margin: 40px 0;
+        flex-wrap: wrap;
+      }
+
+      .flow-box {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px 30px;
+        border-radius: 10px;
+        text-align: center;
+        min-width: 180px;
+      }
+
+      .flow-arrow {
+        font-size: 2rem;
+        color: #e94560;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Slide 1: Title -->
+    <div class="slide title-slide active">
+      <div class="emoji">🤖⚖️</div>
+      <h1>AI-Powered Name Recognition</h1>
+      <p class="subtitle">Intelligent Conflict Checking for Law Firms</p>
+      <p class="meta">Proof of Concept Demo</p>
+    </div>
+
+    <!-- Slide 2: The Problem -->
+    <div class="slide">
+      <h2>The Problem</h2>
+      <div class="two-column">
+        <div>
+          <h3>Data Entry Variations</h3>
+          <ul>
+            <li><strong>Typos:</strong> "Srah" vs "Sarah"</li>
+            <li><strong>Abbreviations:</strong> "Ltd" vs "Limited"</li>
+            <li><strong>Formatting:</strong> "&" vs "and"</li>
+          </ul>
+
+          <h3>Human Memory</h3>
+          <ul>
+            <li><strong>Phonetic guesses:</strong> "Coobernetties"</li>
+            <li><strong>Partial names:</strong> "Plinsky" vs "Plinsky-Williamson"</li>
+          </ul>
+        </div>
+        <div>
+          <div class="highlight-box">
+            <h3 class="warning">⚠️ The Risk</h3>
+            <ul>
+              <li>Missed conflicts of interest</li>
+              <li>Duplicate client records</li>
+              <li>Ethical violations</li>
+              <li>Malpractice exposure</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Solution -->
+    <div class="slide">
+      <h2>Our Solution</h2>
+
+      <div class="flow-diagram">
+        <div class="flow-box">
+          <strong>📝 Search Input</strong><br />
+          <small>Name + Details</small>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">
+          <strong>⚡ Pre-filter</strong><br />
+          <small>Fuzzy Matching</small>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">
+          <strong>🤖 AI Analysis</strong><br />
+          <small>Claude LLM</small>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">
+          <strong>✅ Results</strong><br />
+          <small>Scores + Reasons</small>
+        </div>
+      </div>
+
+      <h3 class="checkmark">✓ Key Benefits</h3>
+      <ul>
+        <li>Catches variations humans would recognize</li>
+        <li>Provides explanations, not just scores</li>
+        <li>Structured JSON output for easy integration</li>
+      </ul>
+    </div>
+
+    <!-- Slide 4: Demo -->
+    <div class="slide">
+      <h2>Live Demo</h2>
+
+      <h3>Test Scenarios</h3>
+      <table>
+        <tr>
+          <th>#</th>
+          <th>Scenario</th>
+          <th>Input</th>
+          <th>Expected Match</th>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>Typo Detection</td>
+          <td>"Sara Mitchell"</td>
+          <td>Sarah Mitchell</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Acronym Matching</td>
+          <td>"NASA"</td>
+          <td>National Aeronautics Space Administration</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Rare Name</td>
+          <td>"Darvonious Williams"</td>
+          <td>Darvonious Johnson</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>Hyphenated Name</td>
+          <td>"Jordan Plinsky"</td>
+          <td>Jordan Plinsky-Williamson</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>Phonetic</td>
+          <td>"Coobernetties"</td>
+          <td>Kubernetes Technologies</td>
+        </tr>
+      </table>
+
+      <div class="highlight-box" style="text-align: center; margin-top: 40px">
+        <p style="font-size: 1.8rem">🖥️ Switch to browser for live demo</p>
+        <p style="color: #888">http://localhost:3000/name-check</p>
+      </div>
+    </div>
+
+    <!-- Slide 5: Rules -->
+    <div class="slide">
+      <h2>Matching Rules</h2>
+
+      <table>
+        <tr>
+          <th>Rule</th>
+          <th>Example</th>
+        </tr>
+        <tr>
+          <td>Exact Match</td>
+          <td>"NASA" = "nasa" = "N.A.S.A."</td>
+        </tr>
+        <tr>
+          <td>Typos</td>
+          <td>"Srah Mitchell" → "Sarah Mitchell"</td>
+        </tr>
+        <tr>
+          <td>Abbreviations</td>
+          <td>"Ltd" ↔ "Limited"</td>
+        </tr>
+        <tr>
+          <td>Nicknames</td>
+          <td>"Bill" ↔ "William"</td>
+        </tr>
+        <tr>
+          <td>Acronyms</td>
+          <td>"IBM" ↔ "International Business Machines"</td>
+        </tr>
+        <tr>
+          <td>Rare Names</td>
+          <td>"Darvonious Johnson" ↔ "Darvonious Smith"</td>
+        </tr>
+        <tr>
+          <td>Hyphenated</td>
+          <td>"Plinsky-Williamson" ↔ "Plinsky"</td>
+        </tr>
+        <tr>
+          <td>Phonetic</td>
+          <td>"Coobernetties" ↔ "Kubernetes"</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Slide 6: Output Format -->
+    <div class="slide">
+      <h2>API Response Format</h2>
+
+      <div class="code-block">
+        [<br />
+        &nbsp;&nbsp;{<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"existingId"</span>:
+        <span class="string">"ENT-0042"</span>,<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"existingName"</span>:
+        <span class="string">"Sarah Mitchell"</span>,<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"matchScore"</span>:
+        <span class="number">85</span>,<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"matchReason"</span>:
+        <span class="string">"Likely typo - 'Sara' missing 'h'"</span>,<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"suggestedAction"</span>:
+        <span class="string">"review"</span><br />
+        &nbsp;&nbsp;}<br />
+        ]
+      </div>
+
+      <h3>Match Score Actions</h3>
+      <table>
+        <tr>
+          <th>Score</th>
+          <th>Classification</th>
+          <th>Action</th>
+        </tr>
+        <tr>
+          <td>95-100</td>
+          <td>Exact Match</td>
+          <td style="color: #ef4444">Merge</td>
+        </tr>
+        <tr>
+          <td>80-94</td>
+          <td>Very Close</td>
+          <td style="color: #f97316">Review</td>
+        </tr>
+        <tr>
+          <td>65-79</td>
+          <td>Possible</td>
+          <td style="color: #3b82f6">Investigate</td>
+        </tr>
+        <tr>
+          <td>&lt;65</td>
+          <td>Distant</td>
+          <td style="color: #8b5cf6">Monitor</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Slide 7: Next Steps -->
+    <div class="slide">
+      <h2>Next Steps</h2>
+
+      <div class="two-column">
+        <div>
+          <h3>Short Term</h3>
+          <ul>
+            <li>Connect to production database</li>
+            <li>Add authentication</li>
+            <li>Performance benchmarking</li>
+          </ul>
+
+          <h3>Medium Term</h3>
+          <ul>
+            <li>Fine-tune thresholds</li>
+            <li>Add cultural name rules</li>
+            <li>User feedback loop</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Long Term</h3>
+          <ul>
+            <li>On-premise LLM option</li>
+            <li>Workflow integration</li>
+            <li>Audit logging</li>
+          </ul>
+
+          <div class="highlight-box" style="margin-top: 40px">
+            <h3 class="checkmark">✓ POC Validated</h3>
+            <p>The approach works. Ready for next phase.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: Questions -->
+    <div class="slide title-slide">
+      <div class="emoji">❓</div>
+      <h1>Questions?</h1>
+      <p class="subtitle">Thank you for your time</p>
+      <p class="meta" style="margin-top: 60px">
+        Repository: github.com/Aderant-Innovate-AKL/Unicorns-Repo<br />
+        Branch: JacobPOC
+      </p>
+    </div>
+
+    <!-- Navigation -->
+    <div class="navigation">
+      <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+      <button class="nav-btn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <div class="slide-number">
+      <span id="currentSlide">1</span> / <span id="totalSlides">8</span>
+    </div>
+
+    <script>
+      let currentSlide = 0;
+      const slides = document.querySelectorAll('.slide');
+      const totalSlides = slides.length;
+
+      document.getElementById('totalSlides').textContent = totalSlides;
+
+      function showSlide(n) {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = (n + totalSlides) % totalSlides;
+        slides[currentSlide].classList.add('active');
+        document.getElementById('currentSlide').textContent = currentSlide + 1;
+      }
+
+      function nextSlide() {
+        showSlide(currentSlide + 1);
+      }
+
+      function prevSlide() {
+        showSlide(currentSlide - 1);
+      }
+
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+          nextSlide();
+        } else if (e.key === 'ArrowLeft') {
+          prevSlide();
+        }
+      });
+    </script>
+  </body>
+</html>
