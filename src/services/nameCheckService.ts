@@ -1,16 +1,24 @@
 // Name Check Service - handles fuzzy pre-filtering and API calls
 
+// New response format for API
 export interface MatchResult {
+  existingId: string;
+  existingName: string;
+  matchScore: number;
+  matchReason: string;
+  suggestedAction: 'merge' | 'review' | 'investigate' | 'monitor';
+}
+
+// Legacy format for internal use
+export interface LegacyMatchResult {
   name: string;
   tier: 1 | 2 | 3 | 4;
   justification: string;
-  matchedOn?: string; // What field triggered the match (e.g., "phone", "email", "name")
+  matchedOn?: string;
 }
 
-export interface NameCheckResponse {
-  searchedName: string;
-  matches: MatchResult[];
-}
+// Response is now just an array of matches
+export type NameCheckResponse = MatchResult[];
 
 // Search criteria with optional contact details
 export interface SearchCriteria {
@@ -22,6 +30,7 @@ export interface SearchCriteria {
 
 // Database record structure
 export interface DatabaseRecord {
+  ID?: string;
   Name: string;
   Phone_Number?: string;
   Internet_Addr?: string;
@@ -65,16 +74,16 @@ export async function performNameCheck(
     `Pre-filtered ${records.length} records: ${contactMatches.length} contact matches, ${nameCandidates.length} name candidates, ${allCandidates.length} total unique`,
   );
 
-  // If no candidates after pre-filtering, return empty
+  // If no candidates after pre-filtering, return empty array
   if (allCandidates.length === 0) {
-    return {
-      searchedName: criteria.name,
-      matches: [],
-    };
+    return [];
   }
 
   // Step 3: Send candidates to AI for intelligent matching
   const searchAcronym = generateAcronym(criteria.name);
+
+  // Build the candidate records for ID lookup on the backend
+  const candidateRecords = records.filter((r) => allCandidates.includes(r.Name));
 
   const response = await fetch(`${API_BASE_URL}/api/name-check`, {
     method: 'POST',
@@ -86,6 +95,7 @@ export async function performNameCheck(
       candidates: allCandidates,
       searchAcronym: searchAcronym || undefined,
       contactMatches: contactMatches.length > 0 ? contactMatches : undefined,
+      candidateRecords: candidateRecords,
     }),
   });
 

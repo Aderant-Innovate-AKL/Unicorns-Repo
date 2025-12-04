@@ -22,12 +22,22 @@ import {
   DatabaseRecord,
 } from '../../services/nameCheckService';
 
-// Tier labels and colors
-const tierConfig = {
-  1: { label: 'Exact Match', color: '#d32f2f', bgColor: '#ffebee' },
-  2: { label: 'Very Close Match', color: '#f57c00', bgColor: '#fff3e0' },
-  3: { label: 'Possible Match', color: '#fbc02d', bgColor: '#fffde7' },
-  4: { label: 'Distant Similarity', color: '#7b1fa2', bgColor: '#f3e5f5' },
+// Score-based styling config
+const getScoreConfig = (score: number) => {
+  if (score >= 95) return { label: 'Exact Match', color: '#d32f2f', bgColor: '#ffebee' };
+  if (score >= 80)
+    return { label: 'Very Close Match', color: '#f57c00', bgColor: '#fff3e0' };
+  if (score >= 65)
+    return { label: 'Possible Match', color: '#fbc02d', bgColor: '#fffde7' };
+  return { label: 'Investigate', color: '#7b1fa2', bgColor: '#f3e5f5' };
+};
+
+// Action badge colors
+const actionConfig: Record<string, { label: string; color: string }> = {
+  merge: { label: 'Merge', color: '#d32f2f' },
+  review: { label: 'Review', color: '#f57c00' },
+  investigate: { label: 'Investigate', color: '#1976d2' },
+  monitor: { label: 'Monitor', color: '#7b1fa2' },
 };
 
 // Form state interface
@@ -56,11 +66,15 @@ const initialFormData: SearchFormData = {
 export default function NameCheck() {
   const [formData, setFormData] = useState<SearchFormData>(initialFormData);
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<NameCheckResponse | null>(null);
+  const [results, setResults] = useState<{
+    searchedName: string;
+    matches: NameCheckResponse;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Convert mock data to the database record format
+  // Convert mock data to the database record format (including IDs)
   const database: DatabaseRecord[] = mockClientsAndParties.map((item) => ({
+    ID: item.ID,
     Name: item.Name,
     Phone_Number: item.Phone_Number || undefined,
     Internet_Addr: item.Internet_Addr || undefined,
@@ -137,8 +151,11 @@ export default function NameCheck() {
         address: formData.address.trim() || undefined,
       };
 
-      const response = await performNameCheck(searchCriteria, database);
-      setResults(response);
+      const matches = await performNameCheck(searchCriteria, database);
+      setResults({
+        searchedName: searchName,
+        matches: matches,
+      });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'An error occurred during the search',
@@ -347,46 +364,74 @@ export default function NameCheck() {
                 </Box>
               ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                  {results.matches.map((match, index) => (
-                    <Box
-                      key={index}
-                      sx={{
-                        p: 2,
-                        borderRadius: 1,
-                        border: `1px solid ${tierConfig[match.tier].color}`,
-                        bgcolor: tierConfig[match.tier].bgColor,
-                      }}
-                    >
+                  {results.matches.map((match, index) => {
+                    const scoreConfig = getScoreConfig(match.matchScore);
+                    const action =
+                      actionConfig[match.suggestedAction] || actionConfig.review;
+                    return (
                       <Box
+                        key={index}
                         sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          mb: 1,
+                          p: 2,
+                          borderRadius: 1,
+                          border: `1px solid ${scoreConfig.color}`,
+                          bgcolor: scoreConfig.bgColor,
                         }}
                       >
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                          {match.name}
-                        </Typography>
-                        <Typography
-                          variant="caption"
+                        <Box
                           sx={{
-                            px: 1.5,
-                            py: 0.5,
-                            borderRadius: 1,
-                            bgcolor: tierConfig[match.tier].color,
-                            color: 'white',
-                            fontWeight: 600,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            mb: 1,
                           }}
                         >
-                          {tierConfig[match.tier].label}
+                          <Box>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                              {match.existingName}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{ color: 'text.secondary', fontFamily: 'monospace' }}
+                            >
+                              ID: {match.existingId}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                px: 1.5,
+                                py: 0.5,
+                                borderRadius: 1,
+                                bgcolor: scoreConfig.color,
+                                color: 'white',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {match.matchScore}% - {scoreConfig.label}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                px: 1.5,
+                                py: 0.5,
+                                borderRadius: 1,
+                                bgcolor: action.color,
+                                color: 'white',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {action.label}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          {match.matchReason}
                         </Typography>
                       </Box>
-                      <Typography variant="body2" color="text.secondary">
-                        {match.justification}
-                      </Typography>
-                    </Box>
-                  ))}
+                    );
+                  })}
                 </Box>
               )}
             </CardContent>

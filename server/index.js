@@ -21,14 +21,55 @@ if (!ANTHROPIC_API_KEY) {
   process.exit(1);
 }
 
+// Convert tier to match score
+function tierToScore(tier) {
+  switch (tier) {
+    case 1:
+      return 98; // Exact match
+    case 2:
+      return 85; // Very close
+    case 3:
+      return 70; // Possible
+    case 4:
+      return 55; // Investigate
+    default:
+      return 50;
+  }
+}
+
+// Determine suggested action based on tier
+function getSuggestedAction(tier) {
+  switch (tier) {
+    case 1:
+      return 'merge';
+    case 2:
+      return 'review';
+    case 3:
+      return 'investigate';
+    case 4:
+      return 'monitor';
+    default:
+      return 'review';
+  }
+}
+
 // Name matching endpoint
 app.post('/api/name-check', async (req, res) => {
   try {
-    const { searchName, candidates, searchAcronym, contactMatches } = req.body;
+    const { searchName, candidates, searchAcronym, contactMatches, candidateRecords } =
+      req.body;
 
     if (!searchName || !candidates || !Array.isArray(candidates)) {
       return res.status(400).json({
         error: 'Invalid request. Required: searchName (string), candidates (array)',
+      });
+    }
+
+    // Build a lookup map from name to record (for ID lookup)
+    const recordsByName = {};
+    if (candidateRecords && Array.isArray(candidateRecords)) {
+      candidateRecords.forEach((record) => {
+        recordsByName[record.Name] = record;
       });
     }
 
@@ -43,14 +84,19 @@ app.post('/api/name-check', async (req, res) => {
     }
 
     // Start with contact matches as Tier 1 (these are definite matches)
-    const contactMatchResults = (contactMatches || []).map((cm) => ({
-      name: cm.name,
-      tier: 1,
-      justification: `Exact ${cm.matchedField} match: "${cm.matchedValue}"`,
-    }));
+    const contactMatchResults = (contactMatches || []).map((cm) => {
+      const record = recordsByName[cm.name];
+      return {
+        existingId: record?.ID || 'UNKNOWN',
+        existingName: cm.name,
+        matchScore: 98,
+        matchReason: `Exact ${cm.matchedField} match: "${cm.matchedValue}"`,
+        suggestedAction: 'merge',
+      };
+    });
 
     // Get names that are already matched via contact details
-    const contactMatchedNames = new Set(contactMatchResults.map((m) => m.name));
+    const contactMatchedNames = new Set(contactMatchResults.map((m) => m.existingName));
 
     // Filter candidates to exclude those already matched via contact details
     const remainingCandidates = candidates.filter((c) => !contactMatchedNames.has(c));
@@ -97,17 +143,26 @@ app.post('/api/name-check', async (req, res) => {
 
       if (content) {
         // Parse the JSON response from Claude
-        aiMatches = parseAIResponse(content);
+        const rawMatches = parseAIResponse(content);
+        // Convert to new format
+        aiMatches = rawMatches.map((m) => {
+          const record = recordsByName[m.name];
+          return {
+            existingId: record?.ID || 'UNKNOWN',
+            existingName: m.name,
+            matchScore: tierToScore(m.tier),
+            matchReason: m.justification,
+            suggestedAction: getSuggestedAction(m.tier),
+          };
+        });
       }
     }
 
     // Combine contact matches (first) with AI matches
     const allMatches = [...contactMatchResults, ...aiMatches];
 
-    res.json({
-      searchedName: searchName,
-      matches: allMatches,
-    });
+    // Return just the array as requested (no wrapper)
+    res.json(allMatches);
   } catch (error) {
     console.error('Error in name-check endpoint:', error);
     res.status(500).json({ error: 'Internal server error' });

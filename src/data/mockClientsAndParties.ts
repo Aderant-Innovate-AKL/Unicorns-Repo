@@ -2,6 +2,7 @@
 // Matches the schema used in the production system
 
 export interface ClientOrParty {
+  ID: string; // Unique identifier (e.g., "ENT-0001")
   Name_Type: 'P' | 'O'; // P = Person, O = Organization
   First_Name: string; // Required for Person, empty for Organization
   Middle_Name: string; // Optional, only for Person
@@ -18,6 +19,13 @@ const generatePhone = (): string => {
   const mid = Math.floor(Math.random() * 900) + 100;
   const end = Math.floor(Math.random() * 9000) + 1000;
   return `(${area}) ${mid}-${end}`;
+};
+
+// Counter for generating sequential IDs
+let idCounter = 0;
+const generateId = (): string => {
+  idCounter++;
+  return `ENT-${String(idCounter).padStart(4, '0')}`;
 };
 
 // Sample addresses for variety
@@ -53,6 +61,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
   // === PERSONS ===
   // Common names with various spellings
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Sarah',
     Middle_Name: '',
@@ -63,6 +72,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[0],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Michael',
     Middle_Name: 'James',
@@ -73,6 +83,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[1],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Jennifer',
     Middle_Name: '',
@@ -83,6 +94,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'David',
     Middle_Name: 'Robert',
@@ -93,6 +105,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[2],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Elizabeth',
     Middle_Name: 'Anne',
@@ -103,6 +116,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Robert',
     Middle_Name: '',
@@ -113,6 +127,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[3],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Jessica',
     Middle_Name: 'Marie',
@@ -123,6 +138,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[4],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'William',
     Middle_Name: '',
@@ -133,6 +149,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Amanda',
     Middle_Name: 'Lynn',
@@ -143,6 +160,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[5],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Christopher',
     Middle_Name: '',
@@ -155,6 +173,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // Names with initials
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'J',
     Middle_Name: 'A',
@@ -165,6 +184,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'M',
     Middle_Name: '',
@@ -175,6 +195,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[7],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Robert',
     Middle_Name: 'E',
@@ -187,6 +208,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // International names
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Jean-Pierre',
     Middle_Name: '',
@@ -197,6 +219,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[24],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Hans',
     Middle_Name: '',
@@ -207,6 +230,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[23],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Wolfgang',
     Middle_Name: '',
@@ -217,6 +241,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Giovanni',
     Middle_Name: '',
@@ -227,6 +252,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Hiroshi',
     Middle_Name: '',
@@ -237,6 +263,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[22],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Wei',
     Middle_Name: '',
@@ -247,6 +274,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Raj',
     Middle_Name: 'Kumar',
@@ -257,6 +285,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Mohammed',
     Middle_Name: '',
@@ -267,6 +296,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Patrick',
     Middle_Name: 'Sean',
@@ -279,6 +309,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // Names with suffixes
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Robert',
     Middle_Name: '',
@@ -289,6 +320,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[9],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'William',
     Middle_Name: 'Henry',
@@ -299,6 +331,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[10],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Charles',
     Middle_Name: '',
@@ -311,6 +344,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // Common spelling variations
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Catherine',
     Middle_Name: '',
@@ -321,6 +355,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[11],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Katherine',
     Middle_Name: 'Ann',
@@ -331,6 +366,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Kathryn',
     Middle_Name: '',
@@ -341,6 +377,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[12],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Stephen',
     Middle_Name: '',
@@ -351,6 +388,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Steven',
     Middle_Name: 'Michael',
@@ -361,6 +399,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[13],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Sean',
     Middle_Name: '',
@@ -371,6 +410,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Shawn',
     Middle_Name: '',
@@ -381,6 +421,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[14],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Shaun',
     Middle_Name: 'Patrick',
@@ -393,6 +434,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // More varied persons
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Alexandra',
     Middle_Name: 'Grace',
@@ -403,6 +445,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[15],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Benjamin',
     Middle_Name: '',
@@ -413,6 +456,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Caroline',
     Middle_Name: 'Rose',
@@ -423,6 +467,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[16],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Douglas',
     Middle_Name: '',
@@ -433,6 +478,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[17],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Eleanor',
     Middle_Name: 'May',
@@ -443,6 +489,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Frederick',
     Middle_Name: 'James',
@@ -453,6 +500,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[18],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Genevieve',
     Middle_Name: '',
@@ -466,6 +514,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
   // === ORGANIZATIONS ===
   // Law Firms
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -476,6 +525,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[15],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -486,6 +536,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[16],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -496,6 +547,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -506,6 +558,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[17],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -516,6 +569,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: 'One Manhattan West, New York, NY 10001',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -528,6 +582,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // Corporations
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -538,6 +593,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[19],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -548,6 +604,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -558,6 +615,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[20],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -568,6 +626,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[20],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -578,6 +637,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[0],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -588,6 +648,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -600,6 +661,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // Tech Companies
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -610,6 +672,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[2],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -620,6 +683,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -630,6 +694,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[3],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -640,6 +705,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -652,6 +718,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // Financial Services
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -662,6 +729,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[5],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -672,6 +740,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -682,6 +751,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[6],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -694,6 +764,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // Healthcare
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -704,6 +775,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[7],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -714,6 +786,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -726,6 +799,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // Acronym test cases
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -736,6 +810,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: 'New York, NY',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -746,6 +821,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: 'New York, NY',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -756,6 +832,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: 'Armonk, NY 10504',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -766,6 +843,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: 'Armonk, NY 10504',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -776,6 +854,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: 'Washington, DC 20546',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -786,6 +865,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: 'Washington, DC 20546',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -796,6 +876,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: 'Conshohocken, PA 19428',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -808,6 +889,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // Transportation with homophones
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -818,6 +900,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[9],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -830,6 +913,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // Real Estate
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -840,6 +924,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[10],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -850,6 +935,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -862,6 +948,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // Manufacturing
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -872,6 +959,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[12],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -882,6 +970,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -894,6 +983,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // Energy
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -904,6 +994,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[14],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -914,6 +1005,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -926,6 +1018,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
 
   // More law firm acronym tests
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -936,6 +1029,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[16],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -946,6 +1040,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[16],
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -956,6 +1051,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'O',
     First_Name: '',
     Middle_Name: '',
@@ -970,6 +1066,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
   // These test the "rare name component" matching rule
   // Rare first names - should match each other despite different last names
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Darvonious',
     Middle_Name: '',
@@ -980,6 +1077,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[0],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Darvonious',
     Middle_Name: 'Xavier',
@@ -990,6 +1088,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Xiomara',
     Middle_Name: '',
@@ -1000,6 +1099,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[3],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Xiomara',
     Middle_Name: 'Lucia',
@@ -1011,6 +1111,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
   },
   // Rare last names - should match despite different first names
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Michael',
     Middle_Name: '',
@@ -1021,6 +1122,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[10],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Jennifer',
     Middle_Name: 'Anne',
@@ -1031,6 +1133,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[10],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Robert',
     Middle_Name: '',
@@ -1042,6 +1145,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
   },
   // Rare middle name
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'John',
     Middle_Name: 'Bartholomew',
@@ -1052,6 +1156,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[5],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Sarah',
     Middle_Name: 'Bartholomew',
@@ -1063,6 +1168,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
   },
   // Unique organization-style person name
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Zarathustra',
     Middle_Name: 'Moonbeam',
@@ -1074,6 +1180,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
   },
   // Another with same rare first name
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Zarathustra',
     Middle_Name: '',
@@ -1087,6 +1194,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
   // === HYPHENATED SURNAME TEST CASES ===
   // These test matching hyphenated surnames with their component parts
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Jordan',
     Middle_Name: '',
@@ -1097,6 +1205,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[2],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Jordan',
     Middle_Name: 'Michael',
@@ -1107,6 +1216,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Jordan',
     Middle_Name: '',
@@ -1118,6 +1228,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
   },
   // Another hyphenated surname set
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Emily',
     Middle_Name: 'Rose',
@@ -1128,6 +1239,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[7],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Emily',
     Middle_Name: '',
@@ -1138,6 +1250,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: '',
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Emily',
     Middle_Name: 'Grace',
@@ -1149,6 +1262,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
   },
   // Triple-barrelled surname
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Victoria',
     Middle_Name: '',
@@ -1159,6 +1273,7 @@ export const mockClientsAndParties: ClientOrParty[] = [
     Address1: sampleAddresses[20],
   },
   {
+    ID: generateId(),
     Name_Type: 'P',
     First_Name: 'Victoria',
     Middle_Name: 'Anne',
