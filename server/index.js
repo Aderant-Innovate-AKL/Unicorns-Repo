@@ -287,9 +287,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`\n🚀 Name Check API Server running on http://localhost:${PORT}`);
-  console.log(`   Health check: http://localhost:${PORT}/api/health`);
-  console.log(`   Name check:   POST http://localhost:${PORT}/api/name-check\n`);
+// Start server on all interfaces for network access
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🚀 Name Check API Server running on port ${PORT}`);
+  console.log(`   Local:   http://localhost:${PORT}`);
+  console.log(`   Network: http://WSAP1544.ap.aderant.com:${PORT}`);
+  console.log(`   Health:  GET /api/health`);
+  console.log(`   API:     POST /api/name-check\n`);
 });

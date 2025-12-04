@@ -37,7 +37,11 @@ export interface DatabaseRecord {
   Address1?: string;
 }
 
-const API_BASE_URL = 'http://localhost:3001';
+// Use current hostname for network access, fallback to localhost
+const API_BASE_URL =
+  typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+    ? `http://${window.location.hostname}:3001`
+    : 'http://localhost:3001';
 
 /**
  * Performs a name check against the database using AI-powered matching
