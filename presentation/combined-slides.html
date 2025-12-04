@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI-Powered Name Reconciliation - Architecture & POC</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #0a0a1a;
+        color: #eee;
+        overflow: hidden;
+      }
+
+      .slide {
+        display: none;
+        height: 100vh;
+        padding: 50px 70px;
+        background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+      }
+
+      .slide.active {
+        display: flex;
+        flex-direction: column;
+      }
+
+      h1 {
+        font-size: 3.2rem;
+        background: linear-gradient(90deg, #00d4ff, #7c3aed);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 20px;
+      }
+
+      h2 {
+        font-size: 2.6rem;
+        background: linear-gradient(90deg, #00d4ff, #7c3aed);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 35px;
+      }
+
+      h3 {
+        font-size: 1.6rem;
+        color: #00d4ff;
+        margin: 25px 0 12px 0;
+      }
+
+      p,
+      li {
+        font-size: 1.35rem;
+        line-height: 1.7;
+        color: #ccc;
+      }
+
+      ul {
+        margin-left: 35px;
+      }
+
+      li {
+        margin: 12px 0;
+      }
+
+      .title-slide {
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+
+      .title-slide h1 {
+        font-size: 4rem;
+        margin-bottom: 25px;
+      }
+
+      .title-slide .subtitle {
+        font-size: 1.8rem;
+        color: #888;
+        margin-bottom: 50px;
+      }
+
+      .title-slide .meta {
+        font-size: 1.2rem;
+        color: #666;
+      }
+
+      .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 50px;
+        flex: 1;
+      }
+
+      .three-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 30px;
+        flex: 1;
+      }
+
+      .highlight-box {
+        background: rgba(0, 212, 255, 0.1);
+        border-left: 4px solid #00d4ff;
+        padding: 20px 25px;
+        margin: 15px 0;
+        border-radius: 0 10px 10px 0;
+      }
+
+      .purple-box {
+        background: rgba(124, 58, 237, 0.1);
+        border-left: 4px solid #7c3aed;
+        padding: 20px 25px;
+        margin: 15px 0;
+        border-radius: 0 10px 10px 0;
+      }
+
+      .green-box {
+        background: rgba(16, 185, 129, 0.1);
+        border-left: 4px solid #10b981;
+        padding: 20px 25px;
+        margin: 15px 0;
+        border-radius: 0 10px 10px 0;
+      }
+
+      .code-block {
+        background: #0d1117;
+        border-radius: 10px;
+        padding: 20px;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 1rem;
+        overflow-x: auto;
+        margin: 15px 0;
+      }
+
+      .code-block .key {
+        color: #79c0ff;
+      }
+      .code-block .string {
+        color: #a5d6ff;
+      }
+      .code-block .number {
+        color: #f8b84e;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+        font-size: 1.15rem;
+      }
+
+      th,
+      td {
+        padding: 12px 18px;
+        text-align: left;
+        border-bottom: 1px solid #333;
+      }
+
+      th {
+        background: rgba(0, 212, 255, 0.15);
+        color: #00d4ff;
+      }
+
+      .navigation {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        display: flex;
+        gap: 12px;
+      }
+
+      .nav-btn {
+        background: linear-gradient(135deg, #00d4ff, #7c3aed);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          opacity 0.2s;
+      }
+
+      .nav-btn:hover {
+        transform: scale(1.05);
+        opacity: 0.9;
+      }
+
+      .slide-number {
+        position: fixed;
+        bottom: 25px;
+        left: 25px;
+        font-size: 1rem;
+        color: #666;
+      }
+
+      .emoji {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin: 3px;
+      }
+
+      .badge-cyan {
+        background: #00d4ff;
+        color: #000;
+      }
+      .badge-purple {
+        background: #7c3aed;
+        color: #fff;
+      }
+      .badge-green {
+        background: #10b981;
+        color: #fff;
+      }
+      .badge-orange {
+        background: #f59e0b;
+        color: #000;
+      }
+      .badge-red {
+        background: #ef4444;
+        color: #fff;
+      }
+
+      .flow-diagram {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        margin: 30px 0;
+        flex-wrap: wrap;
+      }
+
+      .flow-box {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 15px 25px;
+        border-radius: 10px;
+        text-align: center;
+        min-width: 150px;
+      }
+
+      .flow-box.highlight {
+        background: rgba(0, 212, 255, 0.15);
+        border-color: #00d4ff;
+      }
+
+      .flow-arrow {
+        font-size: 1.8rem;
+        color: #00d4ff;
+      }
+
+      .section-label {
+        font-size: 0.9rem;
+        color: #7c3aed;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+      }
+
+      .architecture-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .arch-box {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+      }
+
+      .arch-box.frontend {
+        border-top: 3px solid #00d4ff;
+      }
+      .arch-box.compute {
+        border-top: 3px solid #10b981;
+      }
+      .arch-box.data {
+        border-top: 3px solid #f59e0b;
+      }
+      .arch-box.ai {
+        border-top: 3px solid #7c3aed;
+      }
+
+      .arch-box h4 {
+        font-size: 1rem;
+        margin-bottom: 8px;
+        color: #fff;
+      }
+
+      .arch-box p {
+        font-size: 0.85rem;
+        color: #999;
+      }
+
+      .poc-highlight {
+        position: relative;
+      }
+
+      .poc-highlight::after {
+        content: 'POC';
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #ef4444;
+        color: white;
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Slide 1: Title -->
+    <div class="slide title-slide active">
+      <div class="emoji">🤖⚖️🏗️</div>
+      <h1>AI-Powered Name Reconciliation</h1>
+      <p class="subtitle">Production Architecture & Proof of Concept</p>
+      <p class="meta">Aderant Hackathon Team | December 2024</p>
+    </div>
+
+    <!-- Slide 2: Agenda -->
+    <div class="slide">
+      <h2>Agenda</h2>
+      <div class="two-column">
+        <div>
+          <h3>🏗️ System Architecture</h3>
+          <ul>
+            <li>Production vision & AWS infrastructure</li>
+            <li>Data flow & ingestion pipeline</li>
+            <li>Vector database & semantic search</li>
+          </ul>
+
+          <h3>🔬 Proof of Concept</h3>
+          <ul>
+            <li>AI matching rules validation</li>
+            <li>Live demonstration</li>
+            <li>Results & learnings</li>
+          </ul>
+        </div>
+        <div>
+          <div class="highlight-box">
+            <h3>👥 Team Contributions</h3>
+            <p><strong>Michael, Paul:</strong> AWS Architecture, Vector DB, Deployment</p>
+            <p><strong>Jacob:</strong> AI Matching Engine, POC Implementation</p>
+          </div>
+
+          <div class="purple-box" style="margin-top: 30px">
+            <h3>🎯 Goal</h3>
+            <p>Validate AI-powered conflict checking for law firm client intake</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: The Problem -->
+    <div class="slide">
+      <h2>The Problem</h2>
+      <div class="two-column">
+        <div>
+          <h3>🏛️ Law Firm Conflict Checking</h3>
+          <p>When onboarding new clients, firms must check:</p>
+          <ul>
+            <li>Is this client already in our system?</li>
+            <li>Are they an opposing party in another case?</li>
+            <li>Would representing them create a conflict?</li>
+          </ul>
+
+          <h3>⚠️ Data Quality Issues</h3>
+          <ul>
+            <li><strong>Typos:</strong> "Srah" vs "Sarah"</li>
+            <li><strong>Abbreviations:</strong> "Ltd" vs "Limited"</li>
+            <li><strong>Phonetic guesses:</strong> "Coobernetties"</li>
+            <li><strong>Partial names:</strong> Hyphenated surnames</li>
+          </ul>
+        </div>
+        <div>
+          <div class="highlight-box">
+            <h3 style="color: #ef4444">⚖️ The Risk</h3>
+            <ul>
+              <li>Missed conflicts of interest</li>
+              <li>Ethical violations</li>
+              <li>Malpractice exposure</li>
+              <li>Regulatory penalties</li>
+            </ul>
+          </div>
+
+          <div class="green-box" style="margin-top: 20px">
+            <h3>💡 The Opportunity</h3>
+            <p>
+              AI can understand <em>meaning</em>, not just exact text—catching matches
+              humans would recognize.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Production Architecture Overview -->
+    <div class="slide">
+      <h2>Production Architecture Vision</h2>
+      <p class="section-label">AWS Cloud Infrastructure</p>
+
+      <div class="architecture-grid">
+        <div class="arch-box frontend">
+          <h4>🖥️ Frontend</h4>
+          <p>React 19 + MUI</p>
+          <p>TypeScript</p>
+        </div>
+        <div class="arch-box compute">
+          <h4>⚡ Compute</h4>
+          <p>ECS Fargate</p>
+          <p>FastAPI</p>
+        </div>
+        <div class="arch-box data">
+          <h4>📊 Vector DB</h4>
+          <p>OpenSearch</p>
+          <p>k-NN Search</p>
+        </div>
+        <div class="arch-box ai">
+          <h4>🤖 AI/ML</h4>
+          <p>Amazon Bedrock</p>
+          <p>Claude 3.5 Sonnet</p>
+        </div>
+      </div>
+
+      <div class="flow-diagram">
+        <div class="flow-box">
+          <strong>User Input</strong><br />
+          <small>"John Smith"</small>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">
+          <strong>Titan Embeddings</strong><br />
+          <small>768-dim vector</small>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">
+          <strong>k-NN Search</strong><br />
+          <small>Top 20 similar</small>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box highlight">
+          <strong>AI Analysis</strong><br />
+          <small>Claude matching</small>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">
+          <strong>Results</strong><br />
+          <small>Scores + reasons</small>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px">
+        <span class="badge badge-cyan">~$134/month</span>
+        <span class="badge badge-green">2-4s response</span>
+        <span class="badge badge-purple">350K+ entities</span>
+        <span class="badge badge-orange">>95% recall</span>
+      </div>
+    </div>
+
+    <!-- Slide 5: Data Ingestion Pipeline -->
+    <div class="slide">
+      <h2>Data Ingestion Pipeline</h2>
+      <p class="section-label">Expert SQL Server → Vector Database</p>
+
+      <div class="flow-diagram">
+        <div class="flow-box">
+          <strong>EventBridge</strong><br />
+          <small>Hourly trigger</small>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">
+          <strong>Expert SQL</strong><br />
+          <small>Delta query</small>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">
+          <strong>Batch Process</strong><br />
+          <small>100 entities</small>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">
+          <strong>Bedrock Titan</strong><br />
+          <small>Embeddings</small>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">
+          <strong>OpenSearch</strong><br />
+          <small>Vector index</small>
+        </div>
+      </div>
+
+      <div class="two-column" style="margin-top: 30px">
+        <div>
+          <h3>📈 Performance</h3>
+          <table>
+            <tr>
+              <td>Throughput</td>
+              <td><strong>110 entities/sec</strong></td>
+            </tr>
+            <tr>
+              <td>5,000 records</td>
+              <td><strong>~45 seconds</strong></td>
+            </tr>
+            <tr>
+              <td>Embedding time</td>
+              <td><strong>~20ms/entity</strong></td>
+            </tr>
+          </table>
+        </div>
+        <div>
+          <h3>🔄 Delta Sync Strategy</h3>
+          <div class="code-block" style="font-size: 0.9rem">
+            SELECT * FROM Clients<br />
+            WHERE LastModified > @LastSync
+          </div>
+          <p style="font-size: 1rem">
+            Only modified records are synced—efficient for large databases.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Vector Search -->
+    <div class="slide">
+      <h2>Vector Similarity Search</h2>
+      <p class="section-label">Semantic Understanding with OpenSearch k-NN</p>
+
+      <div class="two-column">
+        <div>
+          <h3>🔍 How It Works</h3>
+          <ol style="margin-left: 20px">
+            <li>Convert name to 768-dimensional vector</li>
+            <li>Use HNSW algorithm for nearest neighbors</li>
+            <li>Cosine similarity scoring</li>
+            <li>Return top-k candidates</li>
+          </ol>
+
+          <div class="highlight-box" style="margin-top: 20px">
+            <h3>💡 Why Vectors?</h3>
+            <p>
+              "John Smith" and "Jon Smyth" are <em>semantically close</em> in vector
+              space—even though they differ in spelling.
+            </p>
+          </div>
+        </div>
+        <div>
+          <h3>📊 Score Interpretation</h3>
+          <table>
+            <tr>
+              <th>Score</th>
+              <th>Meaning</th>
+            </tr>
+            <tr>
+              <td style="color: #ef4444">0.95-1.00</td>
+              <td>Nearly identical</td>
+            </tr>
+            <tr>
+              <td style="color: #f59e0b">0.85-0.94</td>
+              <td>Very similar</td>
+            </tr>
+            <tr>
+              <td style="color: #10b981">0.70-0.84</td>
+              <td>Moderately similar</td>
+            </tr>
+            <tr>
+              <td style="color: #7c3aed">&lt;0.70</td>
+              <td>Weak match</td>
+            </tr>
+          </table>
+
+          <h3 style="margin-top: 20px">⚡ Performance</h3>
+          <p><strong>~50ms</strong> search time for 350K+ vectors</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: POC Introduction -->
+    <div class="slide">
+      <h2>Proof of Concept</h2>
+      <p class="section-label">Validating the AI Matching Engine</p>
+
+      <div class="two-column">
+        <div>
+          <h3>🎯 POC Objective</h3>
+          <p>Validate that AI can intelligently match names with:</p>
+          <ul>
+            <li>High accuracy on variations</li>
+            <li>Human-readable explanations</li>
+            <li>Minimal false positives</li>
+          </ul>
+
+          <h3>🔧 POC Stack</h3>
+          <table>
+            <tr>
+              <td>Frontend</td>
+              <td>React + MUI</td>
+            </tr>
+            <tr>
+              <td>Backend</td>
+              <td>Node.js + Express</td>
+            </tr>
+            <tr>
+              <td>AI</td>
+              <td>Claude Sonnet 4 (Anthropic API)</td>
+            </tr>
+            <tr>
+              <td>Data</td>
+              <td>100+ mock entities</td>
+            </tr>
+          </table>
+        </div>
+        <div>
+          <div class="purple-box">
+            <h3>🔌 How POC Maps to Production</h3>
+            <table style="font-size: 1rem">
+              <tr>
+                <th>POC</th>
+                <th>Production</th>
+              </tr>
+              <tr>
+                <td>Fuzzy pre-filter</td>
+                <td>OpenSearch k-NN</td>
+              </tr>
+              <tr>
+                <td>Claude Sonnet 4</td>
+                <td>Claude 3.5 (Bedrock)</td>
+              </tr>
+              <tr>
+                <td>Mock data</td>
+                <td>Expert SQL</td>
+              </tr>
+              <tr>
+                <td>In-memory</td>
+                <td>DynamoDB</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="green-box" style="margin-top: 20px">
+            <h3>✅ POC Validates</h3>
+            <p>
+              The <strong>AI matching logic</strong> that runs inside the production
+              architecture.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: Matching Rules -->
+    <div class="slide">
+      <h2>AI Matching Rules</h2>
+      <p class="section-label">Implemented & Tested in POC</p>
+
+      <div class="three-column">
+        <div>
+          <h3>📝 Text Variations</h3>
+          <ul style="font-size: 1.1rem">
+            <li>
+              <strong>Exact match</strong><br /><small>NASA = nasa = N.A.S.A.</small>
+            </li>
+            <li><strong>Typos</strong><br /><small>Srah → Sarah</small></li>
+            <li><strong>Abbreviations</strong><br /><small>Ltd ↔ Limited</small></li>
+            <li><strong>Nicknames</strong><br /><small>Bill ↔ William</small></li>
+          </ul>
+        </div>
+        <div>
+          <h3>🔤 Name Patterns</h3>
+          <ul style="font-size: 1.1rem">
+            <li>
+              <strong>Acronyms</strong><br /><small
+                >NASA ↔ National Aeronautics...</small
+              >
+            </li>
+            <li>
+              <strong>Hyphenated</strong><br /><small
+                >Plinsky-Williamson ↔ Plinsky</small
+              >
+            </li>
+            <li>
+              <strong>Rare names</strong><br /><small
+                >Darvonious (unlikely coincidence)</small
+              >
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h3>🎵 Advanced</h3>
+          <ul style="font-size: 1.1rem">
+            <li>
+              <strong>Phonetic</strong><br /><small>Coobernetties → Kubernetes</small>
+            </li>
+            <li>
+              <strong>Contact match</strong><br /><small>Same phone/email = match</small>
+            </li>
+          </ul>
+
+          <div class="highlight-box" style="margin-top: 20px">
+            <p style="font-size: 1rem">
+              <strong>9 rules</strong> implemented and validated
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: Live Demo -->
+    <div class="slide">
+      <h2>Live Demo</h2>
+      <p class="section-label">POC in Action</p>
+
+      <table>
+        <tr>
+          <th>#</th>
+          <th>Test Case</th>
+          <th>Input</th>
+          <th>Expected Match</th>
+          <th>Rule</th>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>Typo Detection</td>
+          <td>"Sara Mitchell"</td>
+          <td>Sarah Mitchell</td>
+          <td><span class="badge badge-cyan">Typo</span></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Acronym</td>
+          <td>"NASA"</td>
+          <td>National Aeronautics Space Admin</td>
+          <td><span class="badge badge-purple">Acronym</span></td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Rare Name</td>
+          <td>"Darvonious Williams"</td>
+          <td>Darvonious Johnson</td>
+          <td><span class="badge badge-green">Rare</span></td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>Hyphenated</td>
+          <td>"Jordan Plinsky"</td>
+          <td>Jordan Plinsky-Williamson</td>
+          <td><span class="badge badge-orange">Hyphen</span></td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>Phonetic</td>
+          <td>"Coobernetties"</td>
+          <td>Kubernetes Technologies</td>
+          <td><span class="badge badge-red">Phonetic</span></td>
+        </tr>
+      </table>
+
+      <div class="highlight-box" style="text-align: center; margin-top: 30px">
+        <p style="font-size: 1.6rem">
+          🖥️ Switch to browser:
+          <a
+            href="http://localhost:3000/name-check"
+            target="_blank"
+            style="color: #00d4ff; text-decoration: none; font-weight: bold"
+            >http://localhost:3000/name-check</a
+          >
+        </p>
+      </div>
+    </div>
+
+    <!-- Slide 10: API Response Format -->
+    <div class="slide">
+      <h2>API Response Format</h2>
+      <p class="section-label">Structured JSON Output</p>
+
+      <div class="two-column">
+        <div>
+          <div class="code-block">
+            [<br />
+            &nbsp;&nbsp;{<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"existingId"</span>:
+            <span class="string">"ENT-0042"</span>,<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"existingName"</span>:
+            <span class="string">"Sarah Mitchell"</span>,<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"matchScore"</span>:
+            <span class="number">85</span>,<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"matchReason"</span>:
+            <span class="string">"Likely typo - missing 'h'"</span>,<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"suggestedAction"</span>:
+            <span class="string">"review"</span><br />
+            &nbsp;&nbsp;}<br />
+            ]
+          </div>
+        </div>
+        <div>
+          <h3>📊 Match Scores</h3>
+          <table>
+            <tr>
+              <th>Score</th>
+              <th>Action</th>
+            </tr>
+            <tr>
+              <td>95-100</td>
+              <td><span class="badge badge-red">Merge</span></td>
+            </tr>
+            <tr>
+              <td>80-94</td>
+              <td><span class="badge badge-orange">Review</span></td>
+            </tr>
+            <tr>
+              <td>65-79</td>
+              <td><span class="badge badge-orange">Review</span></td>
+            </tr>
+            <tr>
+              <td>&lt;65</td>
+              <td><span class="badge badge-orange">Review</span></td>
+            </tr>
+          </table>
+
+          <div class="green-box" style="margin-top: 20px">
+            <h3>✅ Integration Ready</h3>
+            <p>Clean JSON format for easy integration with existing workflows.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 11: Questions -->
+    <div class="slide title-slide">
+      <div class="emoji">❓</div>
+      <h1>Questions?</h1>
+      <p class="subtitle">Thank you for your time</p>
+      <div style="margin-top: 40px">
+        <span class="badge badge-cyan" style="font-size: 1.1rem; padding: 8px 16px"
+          >Architecture: Michael, Paul</span
+        >
+        <span class="badge badge-purple" style="font-size: 1.1rem; padding: 8px 16px"
+          >POC: Jacob</span
+        >
+      </div>
+      <p class="meta" style="margin-top: 40px">
+        Repository: github.com/Aderant-Innovate-AKL/Unicorns-Repo<br />
+        Branch: JacobPOC
+      </p>
+    </div>
+
+    <!-- Navigation -->
+    <div class="navigation">
+      <button class="nav-btn" onclick="prevSlide()">← Prev</button>
+      <button class="nav-btn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <div class="slide-number">
+      <span id="currentSlide">1</span> / <span id="totalSlides">11</span>
+    </div>
+
+    <script>
+      let currentSlide = 0;
+      const slides = document.querySelectorAll('.slide');
+      const totalSlides = slides.length;
+
+      document.getElementById('totalSlides').textContent = totalSlides;
+
+      function showSlide(n) {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = (n + totalSlides) % totalSlides;
+        slides[currentSlide].classList.add('active');
+        document.getElementById('currentSlide').textContent = currentSlide + 1;
+      }
+
+      function nextSlide() {
+        showSlide(currentSlide + 1);
+      }
+      function prevSlide() {
+        showSlide(currentSlide - 1);
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+        else if (e.key === 'ArrowLeft') prevSlide();
+      });
+    </script>
+  </body>
+</html>
