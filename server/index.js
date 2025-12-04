@@ -204,6 +204,7 @@ You must be STRICT and CONSERVATIVE. Only flag names that a reasonable person wo
 - **Acronyms and their expansions** (e.g., "DKNY" matches "Donna Karan New York", "IBM" matches "International Business Machines") - if the search term is all caps, check if it could be an acronym for any candidate name
 - **Rare/unique name components** - If a first name, middle name, or surname is distinctively rare or unusual (e.g., "Darvonious", "Xiomara", "Pemberton", "Malificient"), treat a match on that specific component as significant even if other name parts differ entirely. Example: "Darvonious Johnson" should match "Darvonious Smith" because "Darvonious" is so rare it's unlikely to be coincidental. However, do NOT apply this logic to common names - "John Smith" should NOT match "John Williams" just because they share "John".
 - **Hyphenated surname matching** - People with hyphenated surnames (e.g., "Plinsky-Williamson") sometimes use only one part of their name. Match hyphenated surnames with either component: "Jordan Plinsky-Williamson" should match "Jordan Plinsky" AND "Jordan Williamson". Similarly, "Jordan Plinsky" should match "Jordan Plinsky-Williamson". This applies in both directions.
+- **Phonetic approximations** - When someone doesn't know how to spell a name, they may attempt a phonetic approximation. Match names that SOUND similar when spoken aloud, even if the spelling looks very different. Examples: "Coobernetties" ↔ "Kubernetes", "Chykovsky" ↔ "Tchaikovsky", "Huge Ass" ↔ "Hugh Jass". Only flag these as matches when there are no closer spelling-based matches available (Tier 3 or 4).
 
 TIER DEFINITIONS:
 1. **Tier 1 - Exact Match**: Identical names (ignoring case/punctuation). "NASA" = "N.A.S.A." = "nasa" are all Tier 1. But "NASA" vs "National Aeronautics Space Administration" is NOT Tier 1 - that's an acronym expansion.
@@ -233,7 +234,8 @@ Example response:
   {"name": "Sarah Mitchell", "tier": 2, "justification": "Likely typo - 'Sara' missing 'h', same last name."},
   {"name": "Johnson & Partners Ltd", "tier": 2, "justification": "Same entity - '&' vs 'and', 'Ltd' vs 'Limited'."},
   {"name": "Darvonious Smith", "tier": 2, "justification": "Rare first name match - 'Darvonious' is highly unusual, unlikely to be coincidental."},
-  {"name": "Jordan Plinsky", "tier": 2, "justification": "Hyphenated surname match - 'Plinsky' is part of 'Plinsky-Williamson'."}
+  {"name": "Jordan Plinsky", "tier": 2, "justification": "Hyphenated surname match - 'Plinsky' is part of 'Plinsky-Williamson'."},
+  {"name": "Kubernetes Inc", "tier": 3, "justification": "Phonetic approximation - 'Coobernetties' sounds like 'Kubernetes' when spoken aloud."}
 ]
 
 Analyze the candidates now and return ONLY the JSON array:`;
