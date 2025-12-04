@@ -17,7 +17,7 @@ dynamodb = boto3.resource('dynamodb', region_name=os.environ.get('AWS_REGION', '
 
 # Environment variables
 ENTITIES_TABLE_NAME = os.environ.get('ENTITIES_TABLE_NAME', 'ExpertEntities')
-BEDROCK_MODEL_ID = os.environ.get('BEDROCK_MODEL_ID', 'anthropic.claude-3-sonnet-20240229-v1:0')
+BEDROCK_MODEL_ID = os.environ.get('BEDROCK_MODEL_ID', 'amazon.nova-lite-v1:0')
 
 def lambda_handler(event, context):
     """
@@ -137,7 +137,7 @@ def analyze_matches_with_ai(
     entity_type: str
 ) -> List[Dict[str, Any]]:
     """
-    Use Amazon Bedrock (Claude) to intelligently match names
+    Use Amazon Bedrock (Nova Lite) to intelligently match names
     This replaces traditional soundex with ML-powered fuzzy matching
     """
     
@@ -147,7 +147,7 @@ def analyze_matches_with_ai(
         for i, entity in enumerate(existing_entities[:20])  # Limit to top 20 for token efficiency
     ])
     
-    # Craft prompt for Claude
+    # Craft prompt for Nova
     prompt = f"""You are an expert legal name matching system. Your task is to analyze if an input name matches any existing entities in a database, considering:
 
 1. Exact matches
@@ -172,6 +172,7 @@ For each entity that could potentially match, provide:
 Return ONLY a valid JSON array (no markdown, no explanations) in this exact format:
 [
   {{
+
     "existingId": "entity_id",
     "existingName": "entity_name",
     "matchScore": 95,
@@ -190,27 +191,32 @@ Important: Match scores should be:
 """
 
     try:
-        # Call Bedrock API
+        # Call Bedrock API with Nova Lite model
         response = bedrock_runtime.invoke_model(
             modelId=BEDROCK_MODEL_ID,
             contentType='application/json',
             accept='application/json',
             body=json.dumps({
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 2000,
-                "temperature": 0.1,  # Low temperature for consistency
                 "messages": [
                     {
                         "role": "user",
-                        "content": prompt
+                        "content": [
+                            {
+                                "text": prompt
+                            }
+                        ]
                     }
-                ]
+                ],
+                "inferenceConfig": {
+                    "max_new_tokens": 2000,
+                    "temperature": 0.1
+                }
             })
         )
         
         # Parse response
         response_body = json.loads(response['body'].read())
-        ai_response = response_body.get('content', [{}])[0].get('text', '[]')
+        ai_response = response_body.get('output', {}).get('message', {}).get('content', [{}])[0].get('text', '[]')
         
         # Extract JSON from response (in case AI adds markdown)
         ai_response = extract_json_from_text(ai_response)
@@ -359,20 +365,25 @@ If conflicts are found, include them in the conflicts array with:
             contentType='application/json',
             accept='application/json',
             body=json.dumps({
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 1500,
-                "temperature": 0.1,
                 "messages": [
                     {
                         "role": "user",
-                        "content": prompt
+                        "content": [
+                            {
+                                "text": prompt
+                            }
+                        ]
                     }
-                ]
+                ],
+                "inferenceConfig": {
+                    "max_new_tokens": 1500,
+                    "temperature": 0.1
+                }
             })
         )
         
         response_body = json.loads(response['body'].read())
-        ai_response = response_body.get('content', [{}])[0].get('text', '{}')
+        ai_response = response_body.get('output', {}).get('message', {}).get('content', [{}])[0].get('text', '{}')
         
         # Extract JSON
         json_text = extract_json_from_text(ai_response) if '[' in ai_response else ai_response
